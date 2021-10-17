@@ -1,1 +1,1 @@
-web: gunicorn src/application
+web: bash -c "cd src && gunicorn wsgi:app"
