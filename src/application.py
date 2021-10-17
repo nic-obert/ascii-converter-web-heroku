@@ -1,18 +1,17 @@
-from typing import Type, Union
+from typing import Union
 from flask import Flask, Blueprint, render_template, request, redirect, Response, current_app as app, send_file
 from werkzeug.datastructures import FileStorage
-from pathlib import Path
 
 from upload_manager import UploadManager
 from ascii_converter import image_to_ascii
-from settings import WHITE_ON_BLACK_IMAGE_STYLE, BLACK_ON_WHITE_IMAGE_STYLE
+from settings import *
 
 
 blueprint = Blueprint(
     name='ASCII Converter',
     import_name=__name__,
-    static_folder=Path('static').resolve(),
-    template_folder=Path('templates').resolve()
+    static_folder=STATIC_FILES_FOLDER,
+    template_folder=TEMPLATES_FOLDER
 )
 
 
@@ -27,7 +26,7 @@ app: ASCIIConverterApp
 def create_app() -> ASCIIConverterApp:
     application = Flask(__name__)
     application.register_blueprint(blueprint)
-    application.upload_manager = UploadManager(Path('src/uploads').resolve())
+    application.upload_manager = UploadManager(UPLOADS_FOLDER)
     return application
 
 
