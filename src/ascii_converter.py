@@ -2,6 +2,7 @@ from typing import Tuple, NewType
 from PIL import Image
 from pathlib import Path
 import time
+import math
 
 
 Pixel = NewType("Pixel", Tuple[int, int, int, int])
@@ -26,7 +27,7 @@ def get_pixel_intensity(pixel: Pixel) -> float:
 def convert_image(image: Image) -> str:
     ascii_string = ''
     width, height = image.size
-    
+
     for col in range(height):
         for row in range(width):
             pixel: Pixel = image.getpixel((row, col))
@@ -53,13 +54,28 @@ def try_load_image(image_name: Path) -> Image:
     return image
 
 
-def image_to_ascii(image_name: Path) -> str:
-    image = try_load_image(image_name)
+def calculate_image_size(image, resize_percentage: float) -> Tuple[int, int]:
+    resize_percentage /= 100
+    width, height = image.size
+    return (
+        math.ceil(width * resize_percentage),
+        math.ceil(height * resize_percentage)
+    )
+
+
+def image_to_ascii(image_path: Path, resize_percentage: float) -> str:
+    image = try_load_image(image_path)
+
+    image_size = calculate_image_size(image, resize_percentage)
+    image = image.resize(image_size)
+    image.save(image_path)
+
     ascii_image = convert_image(image)
     image.close()
+
     return ascii_image
 
 
-def video_to_ascii(video_name: Path) -> str:
+def video_to_ascii(video_path: Path) -> str:
     pass
 

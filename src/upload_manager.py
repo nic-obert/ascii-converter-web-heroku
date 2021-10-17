@@ -1,6 +1,5 @@
 from pathlib import Path
 from werkzeug.datastructures import FileStorage
-from typing import List
 import time
 import os
 
@@ -13,8 +12,7 @@ class UploadManager:
         self.instant_saved_count = 0
     
 
-    def save_image(self, image: FileStorage) -> str:
-        "Save an image, return the image's path"
+    def generate_name(self) -> str:
         saved_time = int(time.time())
 
         if saved_time == self.last_saved:
@@ -23,7 +21,14 @@ class UploadManager:
             self.instant_saved_count = 0
             self.last_saved = saved_time
 
-        name = f'{saved_time}.{self.instant_saved_count}'
+        return f'{saved_time}-{self.instant_saved_count}'
+
+
+    def save_image(self, image: FileStorage) -> Path:
+        "Save an image, return the image's path"
+        extension = Path(image.filename).suffix
+        name = self.generate_name() + extension
+
         image_path = self.save_path.joinpath(name) 
         image.save(image_path)
         

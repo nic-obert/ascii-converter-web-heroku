@@ -20,6 +20,9 @@
 
         <br><br>
 
+
+        <label for="image-style">Choose your style</label>
+        <br>
         <label for="white-on-black-style">White on Black</label>
         <input type="radio" name="image-style" id="white-on-black-style" value="WHITE_ON_BLACK" checked>
 
@@ -28,6 +31,11 @@
         <label for="black-on-white-style">Black on White</label>
         <input type="radio" name="image-style" id="black-on-white-style" value="BLACK_ON_WHITE">
         
+        <br><br>
+
+        <label for="resize-percentage">Resize percentage</label>
+        <input type="number" step="0.0001" name="resize-percentage" id="resize-percentage" value="100" minlength="1" size="4" required max="200">%
+
         <br><br>
 
         <input type="submit" value="Convert!">
