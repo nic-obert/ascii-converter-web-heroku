@@ -1,8 +1,9 @@
-from typing import Tuple, NewType
-from PIL import Image
-from pathlib import Path
 import time
 import math
+from typing import Tuple, NewType
+from PIL import Image
+from PIL.Image import Image as ImageType
+from pathlib import Path
 
 
 Pixel = NewType("Pixel", Tuple[int, int, int, int])
@@ -24,7 +25,7 @@ def get_pixel_intensity(pixel: Pixel) -> float:
     return sum(pixel) / 1020
 
 
-def convert_image(image: Image) -> str:
+def convert_image(image: ImageType) -> str:
     ascii_string = ''
     width, height = image.size
 
@@ -40,7 +41,7 @@ def convert_image(image: Image) -> str:
     return ascii_string
 
 
-def try_load_image(image_name: Path) -> Image:
+def try_load_image(image_name: Path) -> ImageType:
     for retry_count in range(MAX_OPEN_RETRIES):
         try:
             image = Image.open(image_name)
@@ -68,7 +69,6 @@ def image_to_ascii(image_path: Path, resize_percentage: float) -> str:
 
     image_size = calculate_image_size(image, resize_percentage)
     image = image.resize(image_size)
-    image.save(image_path)
 
     ascii_image = convert_image(image)
     image.close()

@@ -1,7 +1,9 @@
-from pathlib import Path
-from werkzeug.datastructures import FileStorage
 import time
 import os
+from pathlib import Path
+from typing import Tuple
+from werkzeug.datastructures import FileStorage
+from database import Database
 
 
 class UploadManager:
@@ -10,6 +12,13 @@ class UploadManager:
         self.save_path = save_path
         self.last_saved: int = 0
         self.instant_saved_count = 0
+
+        self.check_save_path()
+
+    
+    def check_save_path(self) -> None:
+        if not self.save_path.exists():
+            self.save_path.mkdir()
     
 
     def generate_name(self) -> str:
@@ -37,4 +46,22 @@ class UploadManager:
     
     def remove(self, path: Path) -> None:
         os.remove(path)
+    
+
+    def save_ascii_image(self, ascii_image: str, style_code: int) -> str:
+
+        data = bytes([style_code]) + ascii_image.encode('utf-8')
+
+        return str(Database.insert_image(data))
+    
+
+    def get_ascii_image(self, image_id: int) -> Tuple[str, int]:
+        data = Database.select_image(image_id)
+        if data is None:
+            return '', 0
+        
+        style_code = data[0]
+        ascii_image = data[1:].decode('utf-8')
+
+        return ascii_image, style_code
 

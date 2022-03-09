@@ -4,10 +4,19 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="/static/stylesheet.css">
     <title>ASCII Art</title>
 </head>
 <body>
-    <div style="{{ style }}">
+
+    {% if image_id is defined %}
+        <script>
+            window.history.pushState('', '', '/images/{{ image_id }}');
+        </script>
+    {% endif %}
+
+
+    <div class="image-font {{ style }}">
         <pre>{{ ascii_image }}</pre>
     </div>
 </body>

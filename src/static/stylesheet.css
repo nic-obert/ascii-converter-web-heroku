@@ -1,0 +1,26 @@
+
+
+@font-face {
+    font-family: square;
+    src: url(fonts/square.ttf) format("truetype");
+    font-weight: normal;
+    font-style: normal;
+}
+
+
+.image-font {
+    font-family: square;
+    line-height: 10px;
+}
+
+
+.white-on-black {
+    background-color: black;
+    color: white;
+}
+
+
+.white-on-black {
+    color: white;
+    background-color: black;
+}
