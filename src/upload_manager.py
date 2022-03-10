@@ -1,9 +1,10 @@
 import time
 import os
 from pathlib import Path
-from typing import Tuple
 from werkzeug.datastructures import FileStorage
 from database import Database
+from ascii_image import ASCIIImage
+from compressor import compress_ascii_image, decompress_ascii_image
 
 
 class UploadManager:
@@ -48,20 +49,17 @@ class UploadManager:
         os.remove(path)
     
 
-    def save_ascii_image(self, ascii_image: str, style_code: int) -> str:
+    def store_ascii_image(self, ascii_image: ASCIIImage) -> str:
 
-        data = bytes([style_code]) + ascii_image.encode('utf-8')
+        data = compress_ascii_image(ascii_image)
 
         return str(Database.insert_image(data))
     
 
-    def get_ascii_image(self, image_id: int) -> Tuple[str, int]:
+    def get_ascii_image(self, image_id: int) -> ASCIIImage:
         data = Database.select_image(image_id)
         if data is None:
             return '', 0
         
-        style_code = data[0]
-        ascii_image = data[1:].decode('utf-8')
-
-        return ascii_image, style_code
+        return decompress_ascii_image(data)
 

@@ -42,11 +42,11 @@ def index_page():
 
 @blueprint.route('/images/<int:image_id>')
 def get_image(image_id: int):
-    ascii_image, style_code = app.upload_manager.get_ascii_image(image_id)
+    ascii_image = app.upload_manager.get_ascii_image(image_id)
     return render_template(
         'ascii_image.html',
-        ascii_image=ascii_image,
-        style=STYLES[style_code],
+        ascii_image=ascii_image.data,
+        style=STYLES[ascii_image.style_code],
     )
 
 
@@ -86,21 +86,21 @@ def upload_image_page():
     # Actual page functionalities
 
     image_name = app.upload_manager.save_image(image)
-    ascii_image = image_to_ascii(image_name, resize_percentage)
+    ascii_image = image_to_ascii(image_name, resize_percentage, style_code)
     app.upload_manager.remove(image_name)
 
     if generate_url:
-        image_id = app.upload_manager.save_ascii_image(ascii_image, style_code)
+        image_id = app.upload_manager.store_ascii_image(ascii_image)
         return render_template(
             'ascii_image.html',
-            ascii_image=ascii_image,
+            ascii_image=ascii_image.data,
             style=STYLES[style_code],
             image_id=image_id
         )
     
     return render_template(
         'ascii_image.html',
-        ascii_image=ascii_image,
+        ascii_image=ascii_image.data,
         style=STYLES[style_code],
     )
 

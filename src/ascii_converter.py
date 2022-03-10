@@ -4,6 +4,7 @@ from typing import Tuple, NewType
 from PIL import Image
 from PIL.Image import Image as ImageType
 from pathlib import Path
+from ascii_image import ASCIIImage
 
 
 Pixel = NewType("Pixel", Tuple[int, int, int, int])
@@ -64,18 +65,20 @@ def calculate_image_size(image, resize_percentage: float) -> Tuple[int, int]:
     )
 
 
-def image_to_ascii(image_path: Path, resize_percentage: float) -> str:
+def image_to_ascii(image_path: Path, resize_percentage: float, style_code: int) -> ASCIIImage:
     image = try_load_image(image_path)
 
     image_size = calculate_image_size(image, resize_percentage)
     image = image.resize(image_size)
 
-    ascii_image = convert_image(image)
+    ascii_image = ASCIIImage(
+        convert_image(image),
+        image_size[0],
+        image_size[1],
+        style_code
+    )
+
     image.close()
 
     return ascii_image
-
-
-def video_to_ascii(video_path: Path) -> str:
-    pass
 
