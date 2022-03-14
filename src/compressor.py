@@ -3,6 +3,7 @@ from ascii_image import ASCIIImage
 
 
 MULTI_CHAR_SIGN = 0x00
+NEWLINE_CHAR_CODE = 10
 
 
 def decompose_int(number: int, span: int) -> Tuple[int]:
@@ -48,19 +49,37 @@ def compress_ascii_image(image: ASCIIImage) -> bytes:
     current_char = ''
     count = 1
     for char in data:
+
         if char == '\n':
-            continue
-        
-        if char == current_char:
-            count += 1
-        else:
+
             if count == 1:
                 digest.append(ord(current_char))
             elif count < 4:
                 digest.extend([ord(current_char)] * count)
             else:
                 digest.extend(multi_char(current_char, count))
+            
+            count = 1
+            current_char = ''
+        
+        elif char == current_char:
+            count += 1
+
+            if count == 255:
+                digest.extend(multi_char(char, 255))
                 count = 1
+
+        else:
+
+            if current_char != '':
+
+                if count == 1:
+                    digest.append(ord(current_char))
+                elif count < 4:
+                    digest.extend([ord(current_char)] * count)
+                else:
+                    digest.extend(multi_char(current_char, count))
+                    count = 1
             
             current_char = char
 
@@ -72,26 +91,32 @@ def decompress_ascii_image(data: bytes) -> ASCIIImage:
 
     data = data[5:]
 
-    ascii_data = bytearray([b'\n'] * (width + 1) * height)
+    ascii_data = bytearray([NEWLINE_CHAR_CODE] * (width * height))
 
     # Index is -1 because at the first iteration, the index will be incremented
-    ascii_index = -1
-    for byte_index in range(len(data)):
+    ascii_index = 0
+    byte_index = 0
+    upper_bound = len(data)
+    while byte_index < upper_bound:
 
         # Skip one byte for the newline character
-        if byte_index % (width + 1) == 0:
+        if ascii_index % (width) == 0 and byte_index != 0:
             ascii_index += 1
 
         if data[byte_index] == MULTI_CHAR_SIGN:
             count = data[byte_index + 1]
             char = data[byte_index + 2]
-            ascii_data[ascii_index:ascii_index + count] = [chr(char)] * count
+            ascii_data[ascii_index:ascii_index + count] = [char] * count
             ascii_index += count
+            byte_index += 3
 
         else:
-            ascii_data[ascii_index] = chr(data[byte_index])
+            ascii_data[ascii_index] = data[byte_index]
             ascii_index += 1
-        
+            byte_index += 1
+
+    print("length: ", len(ascii_data))
+    print("index of newline: ", ascii_data.index(NEWLINE_CHAR_CODE))
     return ASCIIImage(
         data=ascii_data.decode('ascii'),
         width=width,

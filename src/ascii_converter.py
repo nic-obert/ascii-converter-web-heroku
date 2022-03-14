@@ -9,7 +9,7 @@ from ascii_image import ASCIIImage
 
 Pixel = NewType("Pixel", Tuple[int, int, int, int])
 
-CHARACTERS = (' ', '.', '°', '*', 'o', 'O', '#', '@')
+CHARACTERS = (' ', '.', '-', '*', 'o', 'O', '#', '@')
 
 MAX_CHANNEL_INTENSITY = 255
 MAX_CHANNEL_VALUES = MAX_CHANNEL_INTENSITY * 4
@@ -19,7 +19,7 @@ RETRY_TIMEOUT = 0.1
 
 
 def map_intensity_to_character(intensity: float) -> CHARACTERS:
-    return CHARACTERS[round(intensity * len(CHARACTERS))]
+    return CHARACTERS[round(intensity * len(CHARACTERS) - 1)]
 
 
 def get_pixel_intensity(pixel: Pixel) -> float:

@@ -43,6 +43,7 @@ def index_page():
 @blueprint.route('/images/<int:image_id>')
 def get_image(image_id: int):
     ascii_image = app.upload_manager.get_ascii_image(image_id)
+    print("newlines: ", ascii_image.data.count('\n'))
     return render_template(
         'ascii_image.html',
         ascii_image=ascii_image.data,
