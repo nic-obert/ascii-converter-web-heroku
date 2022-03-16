@@ -6,6 +6,19 @@ MULTI_CHAR_SIGN = 0x00
 NEWLINE_CHAR_CODE = 10
 
 
+'''
+def count_each_char(data: str) -> None:
+    chars = {}
+    for char in data:
+        if char in chars:
+            chars[char] += 1
+        else:
+            chars[char] = 1
+    
+    print(chars)
+'''
+
+
 def decompose_int(number: int, span: int) -> Tuple[int]:
     digest = [0] * span
     for i in range(span):
@@ -45,17 +58,16 @@ def multi_char(char: str, count: int) -> bytes:
 def compress_ascii_image(image: ASCIIImage) -> bytes:
     # First create an digest with the image header
     digest = bytearray(generate_header(image))
-    data = image.data[5:]
     
     count = 1
     current_char = None
-    for char in data:
+    for char in image.data:
 
         # Newline character resets the count
         # The last character of an image should always be a newline
         if char == '\n':
             if count < 4:
-                digest.extend([current_char] * count)
+                digest.extend([ord(current_char)] * count)
             else:
                 digest.extend(multi_char(current_char, count))
             count = 1
@@ -69,7 +81,7 @@ def compress_ascii_image(image: ASCIIImage) -> bytes:
         
         elif count < 4:
             if current_char is not None:
-                digest.extend([current_char] * count)
+                digest.extend([ord(current_char)] * count)
                 count = 1
             current_char = char
 
@@ -98,7 +110,7 @@ def decompress_ascii_image(data: bytes) -> ASCIIImage:
 
         # Check if the end of the row has been reached
         # width - 1 is because indices start at 0
-        if image_index % (width - 1) == 0:
+        if image_index % (width + 1) == 0:
             image_index += 1
 
         # If the byte is a multi-character sequence, read the count and the character
