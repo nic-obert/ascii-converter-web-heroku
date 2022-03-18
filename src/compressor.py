@@ -60,20 +60,10 @@ def compress_ascii_image(image: ASCIIImage) -> bytes:
     digest = bytearray(generate_header(image))
     
     count = 1
-    current_char = None
-    for char in image.data:
+    current_char = image.data[0]
+    for char in image.data[1:]:
 
-        # Newline character resets the count
-        # The last character of an image should always be a newline
-        if char == '\n':
-            if count < 4:
-                digest.extend([ord(current_char)] * count)
-            else:
-                digest.extend(multi_char(current_char, count))
-            count = 1
-            current_char = None
-
-        elif current_char == char:
+        if current_char == char:
             count += 1
             if count == 255:
                 digest.extend(multi_char(current_char, 255))
@@ -109,7 +99,6 @@ def decompress_ascii_image(data: bytes) -> ASCIIImage:
         byte = data[data_index]
 
         # Check if the end of the row has been reached
-        # width - 1 is because indices start at 0
         if image_index % (width + 1) == 0:
             image_index += 1
 
