@@ -1,0 +1,8 @@
+{
+  "devDependencies": {
+    "react-scripts": "^5.0.0"
+  },
+  "scripts": {
+    "build": "./build_extensions.sh"
+  }
+}
