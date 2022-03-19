@@ -55,14 +55,9 @@ def multi_char(char: str, count: int) -> bytes:
 
 
 def compress_ascii_image(image: ASCIIImage) -> bytes:
-    # First create an digest with the image header
+    # First create a digest with the image header
     digest = bytearray(generate_header(image))
 
-    print("compressing image...")
-    count_each_char(image.data)
-    print(f"len image: {len(image.data)}")
-    print(f"width: {image.width}, height: {image.height}")
-    
     count = 1
     current_char = image.data[0]
     for char in image.data[1:]:
@@ -84,17 +79,21 @@ def compress_ascii_image(image: ASCIIImage) -> bytes:
             count = 1
             current_char = char
 
+    # Add the last character, which should be a newline
+    if current_char is not None:
+        digest.extend([ord(current_char)] * count)
+
     return bytes(digest)
 
 
 def decompress_ascii_image(data: bytes) -> ASCIIImage:
     style_code, width, height = extract_header(data)
 
+    # The first 5 bytes are the header
     data = data[5:]
 
     # Create a buffer to store the decompressed image. 
     # Width + 1 is because we need to store the newline character.
-    # The buffer is filled with newline characters to ensure that the image has newlines after each row.
     ascii_image = bytearray((width + 1) * (height + 1))
 
     data_index = 0
@@ -112,23 +111,13 @@ def decompress_ascii_image(data: bytes) -> ASCIIImage:
         
         # If the byte is a single character, just copy it
         else:
-            try:
-                ascii_image[image_index] = byte
-            except IndexError:
-                print(f"IndexError: {image_index}, byte: {byte}")
-                print(f"data_index: {data_index}")
-                print(f"len data: {len(data)}")
-                print(f"len ascii_image: {len(ascii_image)}")
-                print(f"width: {width}, height: {height}")
-                raise
+            ascii_image[image_index] = byte
             image_index += 1
             data_index += 1
     
-    print("decompressing image...")
-    count_each_char(ascii_image.decode('ascii'))
-    print("length:", len(ascii_image))
-    print(f"width: {width}, height: {height}")
-
+    # Remove padding zeros from the end of the image
+    ascii_image = ascii_image[:image_index]
+    
     return ASCIIImage(
         data=ascii_image.decode('ascii'),
         width=width,
