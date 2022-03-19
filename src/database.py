@@ -26,7 +26,12 @@ class Database:
 
     @classmethod
     def init_database(cls) -> None:
-        cls.conn = psycopg2.connect(DATABASE_URL)
+        try:
+            cls.conn = psycopg2.connect(DATABASE_URL)
+        except Exception as e:
+            print(e)
+            quit()
+            
         with cls.conn.cursor() as cursor:
             cursor.execute(cls.INIT_DATABASE)
         cls.conn.commit()
