@@ -6,6 +6,8 @@ from PIL.Image import Image as ImageType
 from pathlib import Path
 from ascii_image import ASCIIImage
 
+import c_ascii_converter
+
 
 Pixel = NewType("Pixel", Tuple[int, int, int, int])
 
