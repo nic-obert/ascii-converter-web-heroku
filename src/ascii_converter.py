@@ -29,6 +29,16 @@ def get_pixel_intensity(pixel: Pixel) -> float:
 
 
 def convert_image(image: ImageType) -> str:
+    width, height = image.size
+    return c_ascii_converter.convert_frame(
+        image.tobytes(),
+        width,
+        height
+    )
+
+
+'''
+def convert_image(image: ImageType) -> str:
     ascii_string = ''
     width, height = image.size
 
@@ -42,6 +52,7 @@ def convert_image(image: ImageType) -> str:
         ascii_string += '\n'
   
     return ascii_string
+'''
 
 
 def try_load_image(image_name: Path) -> ImageType:

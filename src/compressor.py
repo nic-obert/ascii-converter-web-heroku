@@ -94,10 +94,9 @@ def decompress_ascii_image(data: bytes) -> ASCIIImage:
 
     # Create a buffer to store the decompressed image. 
     # Width + 1 is because we need to store the newline character.
-    ascii_image = bytearray((width + 1) * (height + 1))
+    ascii_image: str = ''
 
     data_index = 0
-    image_index = 0
     while data_index < len(data):
         byte = data[data_index]
 
@@ -106,20 +105,15 @@ def decompress_ascii_image(data: bytes) -> ASCIIImage:
             count = data[data_index + 1]
             char = data[data_index + 2]
             data_index += 3 # Skip the whole multi-char sequence
-            ascii_image[image_index:image_index + count] = [char] * count
-            image_index += count
+            ascii_image += chr(char) * count
         
         # If the byte is a single character, just copy it
         else:
-            ascii_image[image_index] = byte
-            image_index += 1
+            ascii_image += chr(byte)
             data_index += 1
-    
-    # Remove padding zeros from the end of the image
-    ascii_image = ascii_image[:image_index]
-    
+        
     return ASCIIImage(
-        data=ascii_image.decode('ascii'),
+        data=ascii_image,
         width=width,
         height=height,
         style_code=style_code

@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 from distutils.core import setup, Extension
 
 setup(name='c_ascii_converter', version='1.0', \

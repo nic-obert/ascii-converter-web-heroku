@@ -29,7 +29,7 @@ float getPixelIntensity(Pixel pixel) {
 }
 
 
-PyObject* c_convert_frame(PyObject* self, PyObject* args)
+PyObject* convert_frame(PyObject* self, PyObject* args)
 {
     // Declare the arguments that will be passed by Python
     PyBytesObject* frameBytes;
@@ -93,7 +93,7 @@ PyObject* c_convert_frame(PyObject* self, PyObject* args)
 // Define the functions that will be exported to Python
 PyMethodDef module_methods[] = 
 {
-    {"c_convert_frame", c_convert_frame, METH_VARARGS, "Convert an image into an ASCII string"},
+    {"convert_frame", convert_frame, METH_VARARGS, "Convert an image into an ASCII string"},
     {NULL} // this struct signals the end of the array
 };
 
@@ -110,7 +110,7 @@ struct PyModuleDef c_module =
 
 
 // The initialization function that will be called when the module is loaded
-PyMODINIT_FUNC PyInit_c_converter()
+PyMODINIT_FUNC PyInit_c_ascii_converter()
 {
     return PyModule_Create(&c_module);
 }
