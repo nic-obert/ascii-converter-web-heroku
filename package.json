@@ -2,6 +2,7 @@
   "name": "ascii-converter-web",
   "version": "1.0.0",
   "scripts": {
-    "build": "./setup.py build && sudo ./setup.py install"
+    "build": "./setup.py build && ./setup.py install",
+    "build-debug": "./setup.py build && sudo ./setup.py install"
   }
 }
