@@ -1,9 +1,6 @@
 {
   "name": "ascii-converter-web",
   "version": "1.0.0",
-  "devDependencies": {
-    "react-scripts": "^5.0.0"
-  },
   "scripts": {
     "build": "./setup.py build && sudo ./setup.py install"
   }
