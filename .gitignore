@@ -1,5 +1,7 @@
 *.pyc
-__pycache__
-.env
+**/__pycache__
+**/.env
 src/uploads/*
-build
+build/
+dist/
+*.egg-info

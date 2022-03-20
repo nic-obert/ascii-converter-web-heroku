@@ -1,3 +1,5 @@
+#from c_ascii_converter import ASCIIImage
+
 
 
 class ASCIIImage:
@@ -9,4 +11,5 @@ class ASCIIImage:
         self.width = width
         self.height = height
         self.style_code = style_code
+
 
