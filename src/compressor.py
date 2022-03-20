@@ -1,6 +1,8 @@
 from typing import Tuple
 from ascii_image import ASCIIImage
 
+import c_ascii_converter
+
 
 MULTI_CHAR_SIGN = 0x00
 NEWLINE_CHAR_CODE = 10
@@ -20,7 +22,7 @@ def count_each_char(data: str) -> None:
 
 def decompose_int(number: int, span: int) -> Tuple[int]:
     digest = [0] * span
-    for i in range(span):
+    for i in reversed(range(span)):
         digest[i] = number % 256
         number //= 256
         if number == 0:
@@ -29,7 +31,7 @@ def decompose_int(number: int, span: int) -> Tuple[int]:
     
 
 def bytes_to_int(data: bytes) -> int:
-    return int.from_bytes(data, byteorder='little')
+    return int.from_bytes(data, byteorder='big')
 
 
 def generate_header(image: ASCIIImage) -> bytes:
@@ -54,6 +56,21 @@ def multi_char(char: str, count: int) -> bytes:
     return bytes([MULTI_CHAR_SIGN, count, ord(char)])
 
 
+def compress_ascii_image(image: ASCIIImage) -> bytes:
+    """Return a bytes object representing the compressed ASCII image."""
+
+    print("Compressing image...")
+    print("width:", image.width)
+    print("height:", image.height)
+    print("style_code:", image.style_code)
+    return c_ascii_converter.compress_frame(
+        image.data,
+        image.width,
+        image.height,
+        image.style_code
+    )
+
+'''
 def compress_ascii_image(image: ASCIIImage) -> bytes:
     # First create a digest with the image header
     digest = bytearray(generate_header(image))
@@ -84,8 +101,15 @@ def compress_ascii_image(image: ASCIIImage) -> bytes:
         digest.extend([ord(current_char)] * count)
 
     return bytes(digest)
+'''
 
 
+def decompress_ascii_image(data: bytes) -> ASCIIImage:
+    """Return an ASCIIImage object representing the decompressed ASCII image."""
+    ascii_string, width, height, style_code = c_ascii_converter.decompress_frame(data)
+    return ASCIIImage(ascii_string, width, height, style_code)
+
+'''
 def decompress_ascii_image(data: bytes) -> ASCIIImage:
     style_code, width, height = extract_header(data)
 
@@ -118,4 +142,5 @@ def decompress_ascii_image(data: bytes) -> ASCIIImage:
         height=height,
         style_code=style_code
     )
+'''
 

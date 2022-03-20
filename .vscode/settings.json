@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "*.pde": "pde",
+        "stdio.h": "c"
+    }
+}

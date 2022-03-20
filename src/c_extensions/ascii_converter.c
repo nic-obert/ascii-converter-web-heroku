@@ -142,6 +142,7 @@ static PyObject* convert_frame(PyObject* self, PyObject* args)
     
     // Parse the arguments
     if (!PyArg_ParseTuple(args, "SHH", &frameBytes, &frameWidth, &frameHeight)) {
+        printf("Error parsing arguments for convert_frame\n");
         return NULL;
     }
 
@@ -153,19 +154,17 @@ static PyObject* convert_frame(PyObject* self, PyObject* args)
     }
 
     const unsigned char* frameBuffer = pyBuffer.buf;
-    // Make space for the extra space after every ASCII character
-    const unsigned short STRING_WIDTH = frameWidth * 2;
     // Each pixel is composed of 3 channels
     const unsigned short BUFFER_WIDTH = frameWidth * 3;
 
     // Create the string to store the frame that will be returned
-    char string[frameHeight * STRING_WIDTH];
+    char string[frameHeight * frameWidth];
 
     // Iterate over the rows of the frame and convert them to ASCII
     unsigned int yString = 0;
-    for (unsigned short y = 0; y < frameHeight; y++, yString += STRING_WIDTH) {
+    for (unsigned short y = 0; y < frameHeight; y++, yString += frameWidth) {
 
-        for (unsigned short xBuffer = 0, xString = 0; xString < STRING_WIDTH; xBuffer+=3, xString+=2) {
+        for (unsigned short xBuffer = 0, xString = 0; xString < frameWidth; xBuffer+=3, xString++) {
             // Calculate the position of the pixel in the frame
             const unsigned int framePosition = y * BUFFER_WIDTH + xBuffer;
             
@@ -177,14 +176,12 @@ static PyObject* convert_frame(PyObject* self, PyObject* args)
             
             // Store the character in the string
             string[yString + xString] = character;
-            // Add a space after the character to fix the console aspect ratio
-            string[yString + xString + 1] = ' ';
         }
         // Add a new line after each row
-        string[yString + STRING_WIDTH - 1] = '\n';
+        string[yString + frameWidth - 1] = '\n';
     }
     // Add the null termination character at the end of the string
-    string[frameHeight * STRING_WIDTH - 1] = '\0';
+    string[frameHeight * frameWidth - 1] = '\0';
 
     // Release the previously allocated buffer to avoid memory leaks
     PyBuffer_Release(&pyBuffer);
@@ -198,10 +195,171 @@ static PyObject* convert_frame(PyObject* self, PyObject* args)
 // ---------------- FRAME COMPRESSION  -------------------
 
 
-// static PyObject* compress_frame(PyObject* self, PyObject* args)
-// {
-// }
+#define MULTI_CHAR_SIGN 0
+#define NEWLINE_CHAR_CODE 10
+#define MULTI_CHAR_SEQUENCE_LENGTH 3 // Sequence: 0x00 | count | char
+#define HEADER_SIZE 5 // Size of the header of a compressed frame
 
+
+static void multiChar(unsigned char character, size_t count, unsigned char* buffer) {
+    buffer[0] = MULTI_CHAR_SIGN;
+    buffer[1] = (unsigned char) count;
+    buffer[2] = character;
+}
+
+
+static PyObject* compress_frame(PyObject* self, PyObject* args)
+{
+    const char* frame;
+    unsigned short frameWidth;
+    unsigned short frameHeight;
+    unsigned char frameStyleCode;
+
+    if (!PyArg_ParseTuple(args, "sHHB", &frame, &frameWidth, &frameHeight, &frameStyleCode)) {
+        printf("Error parsing arguments for compress_frame\n");
+        return NULL;
+    }
+
+    const size_t frameSize = (frameWidth + 1) * frameHeight;
+
+    // Create the buffer to store the compressed frame
+    unsigned char buffer[frameSize];
+
+    char currentChar = frame[0];
+    size_t count = 1;
+    size_t bufferIndex = 0;
+    // Start from frameIndex 1 because currentChar is already set to the first character of the frame
+    for (size_t frameIndex = 1; frameIndex < frameSize; frameIndex++) {
+        const char c = frame[frameIndex];
+
+        if (currentChar == c) {
+            count ++;
+            if (count == 255) {
+                multiChar((unsigned char) c, 255, buffer + bufferIndex);
+                count = 1;
+                bufferIndex += MULTI_CHAR_SEQUENCE_LENGTH;
+            }
+        }
+        else if (count < 4) {
+            // Add <count> characters to the buffer
+            for (unsigned char i = 0; i < count; i++) {
+                buffer[bufferIndex + i] = (unsigned char) currentChar;
+            }
+            bufferIndex += count;
+            count = 1;
+            currentChar = c;
+        }
+        else {
+            multiChar((unsigned char) currentChar, count, buffer + bufferIndex);
+            bufferIndex += MULTI_CHAR_SEQUENCE_LENGTH;
+            count = 1;
+            currentChar = c;
+        }
+
+    }
+
+    // Add the last character to the buffer
+    if (count < 4) {
+        for (unsigned char i = 0; i < count; i++) {
+            buffer[bufferIndex + i] = (unsigned char) currentChar;
+        }
+        bufferIndex += count;
+    }
+    else {
+        multiChar((unsigned char) currentChar, count, buffer + bufferIndex);
+        bufferIndex += MULTI_CHAR_SEQUENCE_LENGTH;
+    }
+
+    // Create a new buffer to store the compressed frame
+    unsigned char compressedFrame[bufferIndex + HEADER_SIZE];
+
+    // Create the header right into the compressed frame to avoid copying the header into the buffer
+    compressedFrame[0] = frameStyleCode;
+    compressedFrame[1] = (unsigned char) (frameWidth >> 8);
+    compressedFrame[2] = (unsigned char) (frameWidth & 0xFF);
+    compressedFrame[3] = (unsigned char) (frameHeight >> 8);
+    compressedFrame[4] = (unsigned char) (frameHeight & 0xFF);
+
+    // Copy the compressed frame buffer into the new, final buffer
+    memcpy(compressedFrame + HEADER_SIZE, buffer, bufferIndex);
+    
+    // Return a Python bytes object representing the compressed frame
+    return Py_BuildValue("y#", compressedFrame, bufferIndex + HEADER_SIZE);   
+}
+
+
+// ---------------- FRAME DECOMPRESSION  -------------------
+
+
+static PyObject* decompress_frame(PyObject* self, PyObject* args)
+{
+    PyBytesObject* compressedFrame;
+
+    if (!PyArg_ParseTuple(args, "S", &compressedFrame)) {
+        printf("Error parsing arguments for decompress_frame\n");
+        return NULL;
+    }
+
+    // Get the compressed frame data
+    Py_buffer pyBuffer;
+    if (PyObject_GetBuffer((PyObject*) compressedFrame, &pyBuffer, PyBUF_READ) < 0) {
+        printf("Error getting buffer from frame\n");
+        return NULL;
+    }
+
+    const unsigned char* buffer = pyBuffer.buf;
+    const size_t bufferSize = pyBuffer.len;
+
+    // Extract the header from the compressed frame buffer
+    const unsigned char styleCode = buffer[0];
+    const unsigned short frameWidth = (buffer[1] << 8) | buffer[2];
+    const unsigned short frameHeight = (buffer[3] << 8) | buffer[4];
+
+    // Calculate the size of the uncompressed frame
+    const size_t frameSize = (frameWidth + 1) * frameHeight;
+
+    // Create the buffer to store the uncompressed frame
+    // +1 to store the null termination character
+    char uncompressedFrame[frameSize + 1];
+    uncompressedFrame[frameSize] = '\0';
+
+    // Start from bufferIndex HEADER_SIZE because the header is already extracted
+    size_t bufferIndex = HEADER_SIZE;
+    size_t frameIndex = 0;
+
+    while (frameIndex < frameSize) {
+        const unsigned char byte = buffer[bufferIndex];
+
+        printf("Byte: %d, index: %ld\n", byte, frameIndex);
+
+        if (byte == MULTI_CHAR_SIGN) {
+            // Extract the count and the character from the buffer
+            const size_t count = buffer[bufferIndex + 1];
+            const unsigned char character = buffer[bufferIndex + 2];
+
+            // Add <count> characters to the buffer
+            for (unsigned char i = 0; i < count; i++) {
+                uncompressedFrame[frameIndex + i] = character;
+            }
+            bufferIndex += MULTI_CHAR_SEQUENCE_LENGTH;
+            frameIndex += count;
+        }
+        else {
+            // Add the character to the buffer
+            uncompressedFrame[frameIndex] = byte;
+            bufferIndex ++;
+            frameIndex ++;
+        }
+
+    }
+
+    // Release the previously allocated buffer to avoid memory leaks
+    PyBuffer_Release(&pyBuffer);
+
+    // Return a Python tuple containing the image data, width, height and style code
+    return Py_BuildValue("sHHB", uncompressedFrame, frameWidth, frameHeight, styleCode);
+}
+    
 
 
 // ---------------- MODULE INITIALIZATION ----------------
@@ -211,7 +369,8 @@ static PyObject* convert_frame(PyObject* self, PyObject* args)
 static PyMethodDef module_methods[] = 
 {
     {"convert_frame", convert_frame, METH_VARARGS, "Convert an image into an ASCII string"},
-    //{"compress_frame", compress_frame, METH_VARARGS, "Compress an ASCII string into an array of bytes"},
+    {"compress_frame", compress_frame, METH_VARARGS, "Compress an ASCII string into an array of bytes with metadata"},
+    {"decompress_frame", decompress_frame, METH_VARARGS, "Decompress an array of bytes with metadata into an ASCII string"},
     {NULL} // this struct signals the end of the array
 };
 
