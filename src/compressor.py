@@ -104,12 +104,13 @@ def compress_ascii_image(image: ASCIIImage) -> bytes:
 '''
 
 
+'''
 def decompress_ascii_image(data: bytes) -> ASCIIImage:
     """Return an ASCIIImage object representing the decompressed ASCII image."""
     ascii_string, width, height, style_code = c_ascii_converter.decompress_frame(data)
     return ASCIIImage(ascii_string, width, height, style_code)
-
 '''
+
 def decompress_ascii_image(data: bytes) -> ASCIIImage:
     style_code, width, height = extract_header(data)
 
@@ -142,5 +143,5 @@ def decompress_ascii_image(data: bytes) -> ASCIIImage:
         height=height,
         style_code=style_code
     )
-'''
+
 
